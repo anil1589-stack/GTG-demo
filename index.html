@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GA4 + Google Tag Gateway Demo</title>
+
+  <!-- ============================================================
+       GA4 TAG INSTALLATION
+       Replace G-XXXXXXXXXX with your GA4 Measurement ID.
+
+       For Google Tag Gateway, replace the script src with:
+         https://YOUR-GATEWAY-DOMAIN/gtag/js?id=G-XXXXXXXXXX
+       and update the transport_url in gtag('config', ...) below.
+  ============================================================ -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    // Standard GA4 config.
+    // For Google Tag Gateway, add: transport_url: 'https://YOUR-GATEWAY-DOMAIN'
+    gtag('config', 'G-XXXXXXXXXX', {
+      // transport_url: 'https://YOUR-GATEWAY-DOMAIN',  // Uncomment for Tag Gateway
+      // first_party_collection: true,                  // Recommended for Tag Gateway
+      debug_mode: true  // Remove in production
+    });
+  </script>
+  <!-- ============================================================ -->
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ── DEMO BANNER ─────────────────────────────────────────── -->
+  <div class="demo-banner">
+    <span class="demo-label">DEMO MODE</span>
+    <span>GA4 Measurement ID: <code>G-XXXXXXXXXX</code></span>
+    <span class="sep">|</span>
+    <span>Google Tag Gateway: <span id="gateway-status" class="status-off">Not configured</span></span>
+    <button id="open-config" onclick="toggleConfig()">⚙ Configure</button>
+  </div>
+
+  <!-- ── CONFIG PANEL ──────────────────────────────────────────── -->
+  <div class="config-panel" id="config-panel" style="display:none">
+    <h3>Tag Configuration</h3>
+    <div class="config-grid">
+      <div class="config-field">
+        <label>GA4 Measurement ID</label>
+        <input type="text" id="cfg-measurement-id" placeholder="G-XXXXXXXXXX" />
+        <small>Found in GA4 → Admin → Data Streams → Web Stream Details</small>
+      </div>
+      <div class="config-field">
+        <label>Google Tag Gateway Domain <em>(optional)</em></label>
+        <input type="text" id="cfg-gateway-url" placeholder="https://gtm.yourdomain.com" />
+        <small>Your server-side GTM container URL (Cloud Run / App Engine)</small>
+      </div>
+      <div class="config-field">
+        <label>Google Apps Script Endpoint</label>
+        <input type="text" id="cfg-apps-script-url" placeholder="https://script.google.com/macros/s/AKfy.../exec" />
+        <small>Paste the web app URL after deploying <code>apps-script.gs</code></small>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="applyConfig()">Apply &amp; Reload</button>
+    <button class="btn btn-ghost" onclick="toggleConfig()">Cancel</button>
+  </div>
+
+  <!-- ── HERO ──────────────────────────────────────────────────── -->
+  <header class="hero">
+    <div class="container">
+      <div class="hero-badge">GA4 + Google Tag Gateway Demo Site</div>
+      <h1>Measure what matters.<br/>Own your data pipeline.</h1>
+      <p class="hero-sub">
+        This page demonstrates GA4 tag installation alongside Google Tag Gateway
+        (server-side tagging) — with real event firing and first-party data collection.
+      </p>
+      <div class="hero-actions">
+        <a href="#lead-form" class="btn btn-primary" onclick="trackCta('hero_cta')">
+          Get Early Access
+        </a>
+        <a href="#how-it-works" class="btn btn-ghost" onclick="trackCta('learn_more')">
+          See How It Works
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── EVENT LOG (live tag debug panel) ─────────────────────── -->
+  <section class="event-log-bar">
+    <div class="container">
+      <span class="event-log-title">Live Tag Events</span>
+      <div id="event-log-list" class="event-log-list">
+        <span class="event-pill init">page_view fired</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── HOW IT WORKS ──────────────────────────────────────────── -->
+  <section class="section" id="how-it-works">
+    <div class="container">
+      <h2>How GA4 + Tag Gateway Works</h2>
+      <div class="steps">
+        <div class="step" onclick="trackStep(1)">
+          <div class="step-num">1</div>
+          <div>
+            <h3>Browser fires gtag.js</h3>
+            <p>Your GA4 snippet loads from Google's CDN (or your gateway domain)
+               and pushes events into <code>dataLayer</code>.</p>
+          </div>
+        </div>
+        <div class="step" onclick="trackStep(2)">
+          <div class="step-num">2</div>
+          <div>
+            <h3>Hits routed to Tag Gateway</h3>
+            <p>With <code>transport_url</code> set, all hits travel to your server-side
+               GTM container instead of going directly to Google.</p>
+          </div>
+        </div>
+        <div class="step" onclick="trackStep(3)">
+          <div class="step-num">3</div>
+          <div>
+            <h3>Server enriches &amp; forwards</h3>
+            <p>The gateway can enrich hits with server-side data, filter PII,
+               and fan out to GA4, BigQuery, and other destinations.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FEATURE CARDS ─────────────────────────────────────────── -->
+  <section class="section section-gray">
+    <div class="container">
+      <h2>Key Benefits</h2>
+      <div class="cards">
+        <div class="card" onclick="trackCard('first_party')">
+          <div class="card-icon">🔒</div>
+          <h3>First-Party Data</h3>
+          <p>Cookies set server-side are first-party and not blocked by ITP or
+             browser extensions.</p>
+        </div>
+        <div class="card" onclick="trackCard('ad_blocker')">
+          <div class="card-icon">🛡️</div>
+          <h3>Ad Blocker Resilience</h3>
+          <p>Hits proxied through your own domain bypass most ad blockers,
+             recovering lost measurement.</p>
+        </div>
+        <div class="card" onclick="trackCard('data_control')">
+          <div class="card-icon">⚡</div>
+          <h3>Real-Time Control</h3>
+          <p>Redact, transform, or enrich any event server-side before it reaches
+             any analytics destination.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── LEAD CAPTURE FORM ──────────────────────────────────────── -->
+  <section class="section" id="lead-form">
+    <div class="container form-container">
+      <div class="form-copy">
+        <h2>Get Early Access</h2>
+        <p>Leave your email and we'll send you a step-by-step guide to setting up
+           GA4 with Google Tag Gateway on your own domain.</p>
+        <ul class="form-perks">
+          <li>✔ Free setup checklist (PDF)</li>
+          <li>✔ Sample Apps Script for Sheets logging</li>
+          <li>✔ Cloud Run deployment template</li>
+        </ul>
+      </div>
+      <div class="form-card">
+        <form id="lead-form-el" onsubmit="submitLead(event)">
+          <div class="field">
+            <label for="email">Work Email *</label>
+            <input type="email" id="email" name="email" required
+                   placeholder="you@company.com"
+                   oninput="trackFormField('email')" />
+          </div>
+          <div class="field">
+            <label for="name">Full Name</label>
+            <input type="text" id="name" name="name"
+                   placeholder="Jane Smith"
+                   oninput="trackFormField('name')" />
+          </div>
+          <div class="field">
+            <label for="company">Company</label>
+            <input type="text" id="company" name="company"
+                   placeholder="Acme Corp"
+                   oninput="trackFormField('company')" />
+          </div>
+          <button type="submit" class="btn btn-primary btn-full" id="submit-btn">
+            Request Access →
+          </button>
+          <p class="form-note">No spam. Unsubscribe any time.</p>
+        </form>
+        <div id="form-success" class="form-success" style="display:none">
+          <div class="success-icon">✓</div>
+          <h3>You're on the list!</h3>
+          <p>Check your inbox — we'll be in touch shortly.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ────────────────────────────────────────────────── -->
+  <footer class="footer">
+    <div class="container">
+      <p>GA4 + Google Tag Gateway Demo &nbsp;|&nbsp; Built for tag implementation demos</p>
+      <p class="footer-note">
+        Events fire to GA4 via <code>gtag.js</code>.
+        Email submissions are stored in Google Sheets via Apps Script.
+        See <code>apps-script.gs</code> for the backend code.
+      </p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
