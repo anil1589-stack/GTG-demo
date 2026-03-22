@@ -7,13 +7,13 @@
 
   <!-- ============================================================
        GA4 TAG INSTALLATION
-       Replace G-XXXXXXXXXX with your GA4 Measurement ID.
+       Replace G-GXPDYS22V8 with your GA4 Measurement ID.
 
        For Google Tag Gateway, replace the script src with:
-         https://YOUR-GATEWAY-DOMAIN/gtag/js?id=G-XXXXXXXXXX
+         https://YOUR-GATEWAY-DOMAIN/gtag/js?id=G-GXPDYS22V8
        and update the transport_url in gtag('config', ...) below.
   ============================================================ -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-GXPDYS22V8"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag() { dataLayer.push(arguments); }
@@ -21,7 +21,7 @@
 
     // Standard GA4 config.
     // For Google Tag Gateway, add: transport_url: 'https://YOUR-GATEWAY-DOMAIN'
-    gtag('config', 'G-XXXXXXXXXX', {
+    gtag('config', 'G-GXPDYS22V8', {
       // transport_url: 'https://YOUR-GATEWAY-DOMAIN',  // Uncomment for Tag Gateway
       // first_party_collection: true,                  // Recommended for Tag Gateway
       debug_mode: true  // Remove in production
@@ -36,7 +36,7 @@
   <!-- ── DEMO BANNER ─────────────────────────────────────────── -->
   <div class="demo-banner">
     <span class="demo-label">DEMO MODE</span>
-    <span>GA4 Measurement ID: <code>G-XXXXXXXXXX</code></span>
+    <span>GA4 Measurement ID: <code>G-GXPDYS22V8</code></span>
     <span class="sep">|</span>
     <span>Google Tag Gateway: <span id="gateway-status" class="status-off">Not configured</span></span>
     <button id="open-config" onclick="toggleConfig()">⚙ Configure</button>
@@ -48,7 +48,7 @@
     <div class="config-grid">
       <div class="config-field">
         <label>GA4 Measurement ID</label>
-        <input type="text" id="cfg-measurement-id" placeholder="G-XXXXXXXXXX" />
+        <input type="text" id="cfg-measurement-id" placeholder="G-GXPDYS22V8" />
         <small>Found in GA4 → Admin → Data Streams → Web Stream Details</small>
       </div>
       <div class="config-field">
