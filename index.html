@@ -6,26 +6,45 @@
   <title>GA4 + Google Tag Gateway Demo</title>
 
   <!-- ============================================================
-       GA4 TAG INSTALLATION
-       Replace G-GXPDYS22V8 with your GA4 Measurement ID.
-
-       For Google Tag Gateway, replace the script src with:
-         https://YOUR-GATEWAY-DOMAIN/gtag/js?id=G-GXPDYS22V8
-       and update the transport_url in gtag('config', ...) below.
+       GA4 TAG INSTALLATION — dynamic script loader
+       Reads localStorage config set via the ⚙ Configure panel.
+       When no GTG domain is configured, gtag.js loads from
+       www.googletagmanager.com (standard). When a gateway domain
+       is configured, gtag.js loads from that domain instead and
+       transport_url is set so hits are also routed through it.
   ============================================================ -->
-  <script async src="https://gtm.gtg-demo.com/gtag/js?id=G-GXPDYS22V8"></script>
   <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() { dataLayer.push(arguments); }
-    gtag('js', new Date());
+    (function () {
+      var CONFIG_KEY = 'ga4demo_config';
+      var cfg = {};
+      try { cfg = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {}; } catch (e) {}
 
-    // Standard GA4 config.
-    // For Google Tag Gateway, add: transport_url: 'https://YOUR-GATEWAY-DOMAIN'
-    gtag('config', 'G-GXPDYS22V8', {
-      // transport_url: 'https://YOUR-GATEWAY-DOMAIN',  // Uncomment for Tag Gateway
-      // first_party_collection: true,                  // Recommended for Tag Gateway
-      debug_mode: true  // Remove in production
-    });
+      var measurementId = cfg.measurementId || 'G-GXPDYS22V8';
+      var gatewayUrl    = (cfg.gatewayUrl || '').replace(/\/$/, '');
+      var scriptOrigin  = gatewayUrl || 'https://www.googletagmanager.com';
+
+      // Inject gtag.js from the correct origin
+      var s = document.createElement('script');
+      s.async = true;
+      s.src   = scriptOrigin + '/gtag/js?id=' + measurementId;
+      document.head.appendChild(s);
+
+      // Standard gtag bootstrap
+      window.dataLayer = window.dataLayer || [];
+      function gtag() { dataLayer.push(arguments); }
+      window.gtag = gtag;
+      gtag('js', new Date());
+
+      var gtagConfig = { debug_mode: true };
+      if (gatewayUrl) {
+        gtagConfig.transport_url         = gatewayUrl;
+        gtagConfig.first_party_collection = true;
+      }
+      gtag('config', measurementId, gtagConfig);
+
+      // Expose resolved values for the banner (app.js reads these)
+      window._ga4demo = { measurementId: measurementId, scriptOrigin: scriptOrigin, gatewayUrl: gatewayUrl };
+    })();
   </script>
   <!-- ============================================================ -->
 
@@ -36,7 +55,9 @@
   <!-- ── DEMO BANNER ─────────────────────────────────────────── -->
   <div class="demo-banner">
     <span class="demo-label">DEMO MODE</span>
-    <span>GA4 Measurement ID: <code>G-GXPDYS22V8</code></span>
+    <span>GA4 ID: <code id="banner-measurement-id">G-GXPDYS22V8</code></span>
+    <span class="sep">|</span>
+    <span>gtag.js source: <span id="tag-source-status" class="status-off">www.googletagmanager.com</span></span>
     <span class="sep">|</span>
     <span>Google Tag Gateway: <span id="gateway-status" class="status-off">Not configured</span></span>
     <button id="open-config" onclick="toggleConfig()">⚙ Configure</button>

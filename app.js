@@ -37,13 +37,35 @@ function toggleConfig() {
 
 // ── Initialise on load ──────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  const cfg = loadConfig();
+  const cfg    = loadConfig();
+  const demo   = window._ga4demo || {};
 
-  // Update gateway status indicator
+  // GA4 Measurement ID in banner
+  const idEl = document.getElementById('banner-measurement-id');
+  if (idEl) idEl.textContent = demo.measurementId || 'G-GXPDYS22V8';
+
+  // gtag.js source indicator
+  const tagSourceEl = document.getElementById('tag-source-status');
+  if (tagSourceEl) {
+    const origin = demo.scriptOrigin || 'https://www.googletagmanager.com';
+    try {
+      tagSourceEl.textContent = new URL(origin).hostname;
+    } catch (e) {
+      tagSourceEl.textContent = origin;
+    }
+    tagSourceEl.className = demo.gatewayUrl ? 'status-on' : 'status-off';
+  }
+
+  // Google Tag Gateway status indicator
   const statusEl = document.getElementById('gateway-status');
-  if (cfg.gatewayUrl) {
-    statusEl.textContent = cfg.gatewayUrl;
-    statusEl.className   = 'status-on';
+  if (statusEl) {
+    if (cfg.gatewayUrl) {
+      statusEl.textContent = cfg.gatewayUrl;
+      statusEl.className   = 'status-on';
+    } else {
+      statusEl.textContent = 'Not configured';
+      statusEl.className   = 'status-off';
+    }
   }
 
   // Log the page_view pill (already shown statically; add a dynamic one)
