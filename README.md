@@ -1,61 +1,132 @@
 # GA4 + Google Tag Gateway Demo Site
 
-A self-contained demo showing GA4 tag installation, Google Tag Gateway (server-side tagging) configuration, and a lead capture form that stores submissions in Google Sheets via Apps Script.
+A live demo site for showing clients the measurable difference between standard GA4 tracking and GA4 running through a Google Tag Gateway (server-side GTM). Built to be cloneable — swap in your own GA4 ID and gateway domain in under a minute.
 
-## Files
+**Live site:** [anil1589-stack.github.io/GTG-demo](https://anil1589-stack.github.io/GTG-demo)
 
-| File | Purpose |
-|------|---------|
-| `index.html` | Main page with GA4 snippet and lead form |
-| `style.css` | Styles |
-| `app.js` | GA4 event tracking + form submission logic |
-| `apps-script.gs` | Paste into Google Apps Script to create the Sheets backend |
+---
 
-## Quick Start
+## What This Is
 
-### 1. Open the site locally
+This project is a single-page demo site that:
 
-Just open `index.html` in a browser — no build step needed.
+- Fires real GA4 events (page views, button clicks, form interactions, CTA clicks)
+- Routes those hits through a **Google Tag Gateway** (server-side GTM) on a first-party domain
+- Displays a live event log so you can see tags firing in real time
+- Includes a **Configure panel** to swap in any GA4 Measurement ID or gateway domain without touching code
 
-### 2. Configure via the ⚙ button
+It's designed as a sales and demo tool — load it in a client meeting to show, concretely, how server-side tagging recovers data that ad blockers and private browsing modes would otherwise suppress.
 
-Click **⚙ Configure** in the banner and fill in:
+---
 
-| Field | Where to find it |
-|-------|-----------------|
-| GA4 Measurement ID | GA4 → Admin → Data Streams → your web stream → Measurement ID |
-| Google Tag Gateway Domain | Your server-side GTM container URL (Cloud Run / App Engine) |
-| Google Apps Script Endpoint | See step 3 below |
+## Tech Stack
 
-Settings persist in `localStorage` so you don't have to re-enter them on reload.
+| Layer | Technology |
+|---|---|
+| Hosting | GitHub Pages |
+| DNS / Edge | Cloudflare (proxying the gateway subdomain) |
+| Tag script delivery | Cloudflare Workers (serves `gtag.js` from first-party domain) |
+| Server-side GTM | Google Cloud Run (hosts the GTM server container) |
+| Analytics | Google Analytics 4 (GA4) |
+| Lead capture backend | Google Apps Script → Google Sheets |
 
-### 3. Set up the Google Sheets backend
+### How the data flows
 
-1. Create a new Google Sheet at https://sheets.google.com.
-2. Go to **Extensions → Apps Script**.
-3. Paste the contents of `apps-script.gs` and save.
-4. Click **Deploy → New Deployment** → Web app → Execute as *Me* → Anyone can access.
-5. Copy the deployment URL and paste it into ⚙ Configure → *Google Apps Script Endpoint*.
+```
+Browser
+  └── loads gtag.js from gtm.gtg-demo.com (Cloudflare Worker)
+  └── fires events → gtm.gtg-demo.com/g/collect (Cloudflare → Cloud Run)
+        └── Server-side GTM container
+              └── forwards to GA4
+```
 
-Every form submission will append a row:
+Traffic never touches `googletagmanager.com` directly, so it is not blocked by most ad blockers or browser privacy filters.
 
-| Timestamp | Email | Name | Company |
-|-----------|-------|------|---------|
+---
 
-### 4. Configure Google Tag Gateway (optional)
+## Using the Demo Site with a Client
 
-To route hits through your own first-party domain:
+The most effective demo is a side-by-side comparison in a private browsing window.
 
-1. Deploy a server-side GTM container (Cloud Run template or App Engine).
-2. In **⚙ Configure**, enter your gateway domain (e.g., `https://gtm.yourdomain.com`).
-3. The site will automatically set `transport_url` on every `gtag('config', ...)` and `gtag('event', ...)` call.
+### Step-by-step walkthrough
 
-In `index.html`, the GA4 `<script src>` can also be updated to load the gtag library from your gateway domain instead of Google's CDN.
+1. **Open the demo site in a normal browser tab.**
+   - Watch the Live Tag Events bar — you'll see `page_view`, `cta_click`, `step_click`, and other events fire as you interact with the page.
+   - Open the browser's Network tab and filter by `collect` — hits go to `gtm.gtg-demo.com`, not Google's servers.
+
+2. **Open the same URL in a Private / Incognito window with an ad blocker enabled.**
+   - Common ad blockers (uBlock Origin, Brave Shields, etc.) block requests to `www.googletagmanager.com` and `google-analytics.com` by default.
+   - Because this site loads `gtag.js` from `gtm.gtg-demo.com` — a first-party domain — the script loads and events fire even with blockers active.
+
+3. **Compare GA4 Realtime in both scenarios.**
+   - Without a gateway, a blocked session produces zero data in GA4.
+   - With the gateway, the session appears normally in GA4 Realtime because the hit is processed server-side.
+
+4. **Point out the Live Tag Events panel** as a visual confirmation that the tag is running, even in private mode.
+
+This comparison makes the value of server-side tagging immediately tangible for clients.
+
+---
+
+## Clone and Set Up Your Own Version
+
+### Prerequisites
+
+- A GA4 property with a Measurement ID (`G-XXXXXXXXXX`)
+- Optionally: a Google Tag Gateway (server-side GTM container) deployed on your own domain
+
+### 1. Fork or clone the repo
+
+```bash
+git clone https://github.com/anil1589-stack/GTG-demo.git
+cd GTG-demo
+```
+
+### 2. Update the GA4 Measurement ID in `index.html`
+
+Find and replace `G-GXPDYS22V8` with your own Measurement ID in the two places it appears in the `<head>`:
+
+```html
+<script async src="https://gtm.yourdomain.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { dataLayer.push(arguments); }
+  gtag('js', new Date());
+  gtag('config', 'G-XXXXXXXXXX');
+</script>
+```
+
+### 3. (Optional) Point to your own Google Tag Gateway
+
+Replace `gtm.gtg-demo.com` with your gateway domain in the script `src`, and uncomment `transport_url` in the `gtag('config', ...)` call:
+
+```html
+<script async src="https://gtm.yourdomain.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>
+  gtag('config', 'G-XXXXXXXXXX', {
+    transport_url: 'https://gtm.yourdomain.com',
+    first_party_collection: true
+  });
+</script>
+```
+
+### 4. Deploy to GitHub Pages
+
+Push to your `main` branch and enable GitHub Pages in your repo settings:
+**Settings → Pages → Source: Deploy from branch → `main` / root**
+
+### 5. Use the Configure button (no code required)
+
+The site includes a built-in **Configure** panel (⚙ button in the top banner). You can use this to set a custom GA4 Measurement ID, gateway domain, and Apps Script endpoint at runtime — without editing any code. Settings are stored in `localStorage` and applied on reload.
+
+This is useful for live demos where you want to switch between configurations on the fly.
+
+---
 
 ## GA4 Events Fired
 
 | Event | Trigger |
-|-------|---------|
+|---|---|
 | `page_view` | On load (automatic via `gtag('config', ...)`) |
 | `select_content` | CTA button clicks |
 | `tutorial_begin` | Clicking a "How it works" step |
@@ -63,4 +134,21 @@ In `index.html`, the GA4 `<script src>` can also be updated to load the gtag lib
 | `form_start` | First interaction with each form field |
 | `generate_lead` | Successful form submission |
 
-All events are visible in GA4 → DebugView (because `debug_mode: true` is set in `index.html` — remove for production).
+All events are visible in GA4 → DebugView (`debug_mode: true` is set in `index.html` — remove for production).
+
+---
+
+## Files
+
+| File | Purpose |
+|---|---|
+| `index.html` | Main demo page — GA4 tag, UI, Configure panel |
+| `style.css` | Page styles |
+| `app.js` | Event tracking logic, Configure panel behaviour |
+| `apps-script.gs` | Google Apps Script for capturing lead form submissions to Sheets |
+
+---
+
+## License
+
+MIT — free to use, fork, and adapt for your own demos or client work.
